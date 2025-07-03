@@ -1,0 +1,59 @@
+server:
+  port: 8080
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  cloud:
+    discovery:
+      enabled: true
+  application:
+    name: user-service
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  #token
+  jwt:
+    accessTokenExpirationTime: 1209500000 # 1 hour
+    refreshTokenExpirationTime: 1209600000 # 2 weeks
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+rabbitmq:
+  exchangeName: thanhnt.exchange
+  user-mail-queue: userMailQueue
+  user-mail-routing-key: userMailQueueRoutingKey
+
+service:
+  external:
+    timeout: 60000
+
+thanhnt:
+  defaultDateOfBirth: "631152000000" #01/01/1990
+  defaultAvatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/User-avatar.svg/2048px-User-avatar.svg.png"
+  userCacheKey: "USER_CACHE_"
+
+management:
+  endpoints:
+    web:
+    exposure:
+      include: '*'
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: WARN
+    com.thanhnt.userservice: INFO
+

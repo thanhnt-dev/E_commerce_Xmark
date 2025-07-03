@@ -1,0 +1,85 @@
+server:
+  port: 8081
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  application:
+    name: api-gateway
+  cloud:
+    discovery:
+      enabled: true
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user-service/**
+          filters:
+            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+        - id: user-service-swagger
+          uri: lb://user-service
+          predicates:
+            - Path=/v3/api-docs/user-service
+        - id: store-service
+          uri: lb://store-service
+          predicates:
+            - Path=/store-service/**
+          filters:
+            - RewritePath=/store-service/(?<segment>.*), /$\{segment}
+        - id: store-service-swagger
+          uri: lb://store-service
+          predicates:
+            - Path=/v3/api-docs/store-service
+        - id: message-service
+          uri: lb://message-service
+          predicates:
+            - Path=/message-service/**
+          filters:
+            - RewritePath=/message-service/(?<segment>.*), /$\{segment}
+        - id: message-service-swagger
+          uri: lb://message-service
+          predicates:
+            - Path=/v3/api-docs/message-service
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/v3/api-docs/product-service
+          filters:
+            - RewritePath=/product-service/(?<segment>.*), /$\{segment}
+        - id: product-service-swagger
+          uri: lb://product-service
+          predicates:
+            - Path=/v3/api-docs/product-service
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/v3/api-docs/order-service
+          filters:
+            - RewritePath=/order-service/(?<segment>.*), /$\{segment}
+        - id: order-service-swagger
+          uri: lb://order-service
+          predicates:
+            - Path=/v3/api-docs/product-service
+      defaultFilters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      global-cors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+logging:
+  level:
+    root: WARN
+    com.thanhnt.apigateway: INFO
+

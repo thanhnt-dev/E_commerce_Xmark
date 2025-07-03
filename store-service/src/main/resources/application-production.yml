@@ -1,0 +1,28 @@
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+
+spring:
+  config:
+    activate:
+      on-profile: production
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://db-postgresql-store:5433/storeservice
+    username: ${DB_USERNAME_STORE}
+    password: ${DB_PASSWORD_STORE}
+  cloudinary:
+    cloudName: ${CLOUDINARY_CLOUD_NAME}
+    apiKey: ${CLOUDINARY_API_KEY}
+    apiSecret: ${CLOUDINARY_API_SECRET}
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
+  data:
+    redis-user:
+      host: redis-stack-ecommerce
+      port: 6379
+      database: 1

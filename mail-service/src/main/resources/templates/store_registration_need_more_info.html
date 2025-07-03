@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Store Register Email</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .header {
+      color: #fff;
+      padding: 12px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 8px 8px 0 0;
+    }
+    .content {
+      padding: 20px;
+      font-size: 16px;
+      color: #333;
+    }
+    .button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 24px;
+      background-color: #28a745;
+      color: #fff;
+      text-decoration: none;
+      font-size: 16px;
+      border-radius: 5px;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header" style="background: #28a745;">Cần thêm thông tin</div>
+  <div class="content">
+    <p>Xin chào <strong>{{USER_NAME}}</strong>,</p>
+    <p>Thông tin của bạn cần bổ sung để hoàn tất xét duyệt. Vui lòng cập nhật tại đường dẫn sau:</p>
+    <a href="https://chatgpt.com" class="button">Cập nhật thông tin</a>
+    <p>Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi.</p>
+
+    <div class="footer">
+      Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email hoặc tổng đài hỗ trợ.<br>
+      &copy; 2025 XMARK. Mọi quyền được bảo lưu.
+    </div>
+  </div>
+</div>
+</body>

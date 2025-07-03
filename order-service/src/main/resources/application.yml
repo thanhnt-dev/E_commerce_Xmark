@@ -1,0 +1,53 @@
+server:
+  port: 8087
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  cloud:
+    discovery:
+      enabled: true
+  application:
+    name: order-service
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+
+momo:
+  partnerCode: ${MOMO_PARTNER_CODE}
+  redirectUrl: ${MOMO_REDIRECT_URL}
+  endpoint: ${MOMO_ENDPOINT}
+  ipnUrl: ${MOMO_IPN_URL}
+  accessKey: ${MOMO_ACCESS_KEY}
+  secretKey: ${MOMO_SECRET_KEY}
+  requestType: ${MOMO_REQUEST_TYPE}
+
+
+
+service:
+  external:
+    timeout: 60000
+
+management:
+  endpoints:
+    web:
+    exposure:
+      include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: WARN
+    com.thanhnt.orderservice: INFO
+
+thanhnt:
+  shopCacheKey: "SHOP_CACHE_OF_USER_"

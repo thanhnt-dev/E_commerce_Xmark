@@ -1,0 +1,80 @@
+name: CI Microservice with DockerHub
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn clean install -DskipTests
+
+  build-and-push:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    strategy:
+      matrix:
+        service: [api-gateway, eureka-server, mail-service, user-service, store-service, message-service, product-service, order-service]
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Check if ${{ matrix.service }} has changed
+        id: check_changes
+        run: |
+          if git diff --quiet HEAD~1 HEAD -- ${{ matrix.service }}; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build & Push Docker image for ${{ matrix.service }}
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          echo "Changes detected in ${{ matrix.service }}, proceeding to build & push."
+          cd ${{ matrix.service }}
+          mvn clean package -DskipTests
+          docker build -t nguyentanthanh1403/cicd-${{ matrix.service }}:latest .
+          docker tag nguyentanthanh1403/cicd-${{ matrix.service }}:latest nguyentanthanh1403/cicd-${{ matrix.service }}:${{ github.sha }}
+          docker push nguyentanthanh1403/cicd-${{ matrix.service }}:latest
+          docker push nguyentanthanh1403/cicd-${{ matrix.service }}:${{ github.sha }}
+
+      - name: Skip build & push for unchanged ${{ matrix.service }}
+        if: steps.check_changes.outputs.changed == 'false'
+        run: echo "No changes in ${{ matrix.service }}, skipping build & push."

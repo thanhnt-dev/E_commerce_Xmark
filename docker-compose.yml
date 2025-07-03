@@ -1,0 +1,232 @@
+version: '3.8'
+services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: ./Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    expose:
+      - 8761
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: ./Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8081:8081"
+    networks:
+      - ecommerce-network
+    depends_on:
+      - user-service
+    expose:
+      - 8081
+    restart: unless-stopped
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: ./Dockerfile
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db-postgresql-user
+      - redis-stack-ecommerce
+      - eureka-server
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    expose:
+      - 8080
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db-postgresql-user:5435/userservice
+      - SPRING_DATASOURCE_USERNAME=userservice
+      - SPRING_DATASOURCE_PASSWORD=12345
+  store-service:
+    build:
+      context: ./store-service
+      dockerfile: ./Dockerfile
+    container_name: store-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db-postgresql-store
+      - eureka-server
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    expose:
+      - 8082
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db-postgresql-store:5432/storeservice
+      - SPRING_DATASOURCE_USERNAME=storeservice
+      - SPRING_DATASOURCE_PASSWORD=12345
+
+  mail-service:
+    build:
+      context: ./mail-service
+      dockerfile: ./Dockerfile
+    container_name: mail-service
+    depends_on:
+      - eureka-server
+    ports:
+      - "587:587"
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    expose:
+      - 587
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+
+  message-service:
+    build:
+      context: ./message-service
+      dockerfile: ./Dockerfile
+    container_name: message-service
+    ports:
+      - "8085:8085"
+      - "8555:8555" # SocketIO
+    depends_on:
+      - db-postgresql-message
+      - redis-stack-ecommerce
+      - kafka
+      - eureka-server
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    expose:
+      - 8085
+      - 8555
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db-postgresql-message:5432/messageservice
+      - SPRING_DATASOURCE_USERNAME=messageservice
+      - SPRING_DATASOURCE_PASSWORD=12345
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SOCKETIO_HOSTNAME=0.0.0.0
+      - SOCKETIO_PORT=8555
+
+
+  db-postgresql-user:
+    container_name: db-postgresql-user
+    image: postgres
+    deploy:
+      mode: global
+    environment:
+      POSTGRES_USER: userservice
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: userservice
+      PGDATA: /data/postgres
+    volumes:
+      - db_postgresql_userservice:/data/postgres
+    ports:
+      - '5432:5432'
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  db-postgresql-store:
+    container_name: db-postgresql-store
+    image: postgres
+    deploy:
+      mode: global
+    environment:
+      POSTGRES_USER: storeservice
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: storeservice
+      PGDATA: /data/postgres
+    volumes:
+      - db_postgresql_storeservice:/data/postgres
+    ports:
+      - '5433:5432'
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  db-postgresql-message:
+    container_name: db-postgresql-message
+    image: postgres
+    deploy:
+      mode: global
+    environment:
+      POSTGRES_USER: messageservice
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: messageservice
+      PGDATA: /data/postgres
+    volumes:
+      - db_postgresql_messageservice:/data/postgres
+    ports:
+      - '5434:5432'
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  redis-stack-ecommerce:
+    container_name: redis-stack-ecommerce
+    image: redis/redis-stack:latest
+    ports:
+      - '6379:6379'
+      - '8001:8001'
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672" # Cổng UI quản lý RabbitMQ
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - ecommerce-network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    networks:
+      - ecommerce-network
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+
+volumes:
+  db_postgresql_userservice:
+  db_postgresql_storeservice:
+  db_postgresql_messageservice:
+#    name: root_db_postgresql_userservice
+#    external: true
+networks:
+  ecommerce-network:
+    driver: bridge

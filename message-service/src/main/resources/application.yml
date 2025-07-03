@@ -1,0 +1,64 @@
+server:
+  port: 8084
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  cloud:
+    discovery:
+      enabled: true
+  application:
+    name: message-service
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: chat-group
+      notification-group-id: notification-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "*"
+    topics:
+      private: private-chat-messages
+      public: notification-messages
+
+
+
+
+service:
+  external:
+    timeout: 60000
+
+thanhnt:
+  userCacheKey: "USER_CACHE_"
+  shopCacheKey: "SHOP_CACHE_OF_USER_"
+
+management:
+  endpoints:
+    web:
+    exposure:
+      include: '*'
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: WARN
+    com.thanhnt.messageservice: INFO

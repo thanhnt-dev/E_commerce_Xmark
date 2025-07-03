@@ -1,0 +1,14 @@
+spring:
+  config:
+    activate:
+      on-profile: production
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/

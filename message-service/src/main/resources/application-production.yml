@@ -1,0 +1,29 @@
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+
+spring:
+  config:
+    activate:
+      on-profile: production
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://db-postgresql-message:5432/messageservice
+    username: ${DB_USERNAME_MESSAGE}
+    password: ${DB_PASSWORD_MESSAGE}
+
+  data:
+    redis-user:
+      host: redis-stack-ecommerce
+      port: 6379
+      database: 1
+
+  kafka:
+    bootstrap-servers: kafka:9092
+
+socketio:
+  hostname: 0.0.0.0
+  port: 8555
+  origin: ${FRONTEND_URL}

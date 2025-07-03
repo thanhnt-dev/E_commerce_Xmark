@@ -1,0 +1,63 @@
+server:
+  port: 8085
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  cloud:
+    discovery:
+      enabled: true
+  application:
+    name: product-service
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    topics:
+      notification: notification-messages
+
+rabbitmq:
+  exchangeName: thanhnt.exchange
+  product-elastic-queue: productElasticQueue
+  product-elastic-routing-key: productElasticRoutingKey
+  product-log-queue: productLogQueue
+  product-log-routing-key: productLogRouting
+
+service:
+  external:
+    timeout: 60000
+
+thanhnt:
+  adminId: 1
+  adminName: "ThanhNT"
+  shopCacheKey: "SHOP_CACHE_OF_USER_"
+  defaultAvatar: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/User-avatar.svg/2048px-User-avatar.svg.png"
+  defaultImageProduct: "https://mucinmanhtai.com/wp-content/themes/BH-WebChuan-032320/assets/images/default-thumbnail-400.jpg"
+
+management:
+  endpoints:
+    web:
+    exposure:
+      include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: WARN
+    com.thanhnt.productservice: INFO
