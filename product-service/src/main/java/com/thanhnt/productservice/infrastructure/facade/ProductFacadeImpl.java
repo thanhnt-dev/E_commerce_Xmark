@@ -691,6 +691,10 @@ public class ProductFacadeImpl implements ProductFacade {
       Long idProduct = productVariant.getProduct().getId();
 
       Product product = productService.findById(idProduct);
+      product.updateStatus(false);
+      product.updateAt();
+      log.info("Updating product status to inactive for product ID: {}", idProduct);
+      productService.save(product);
       var shopInfo = cacheService.retrieveShopSnapshot(shopKeyCachePrefix + product.getShopId());
       if (shopInfo == null) {
         log.warn("Shop info not found for shop owner ID from Cache: {}", product.getShopId());

@@ -1,5 +1,6 @@
 package com.thanhnt.userservice.infrastructure.security.oauth2;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thanhnt.userservice.api.response.TokenResponse;
 import com.thanhnt.userservice.application.service.AccountService;
 import com.thanhnt.userservice.application.service.CloudinaryService;
@@ -11,18 +12,21 @@ import com.thanhnt.userservice.domain.entity.role.RolesEnum;
 import com.thanhnt.userservice.domain.entity.users.UserProvider;
 import com.thanhnt.userservice.domain.entity.users.Users;
 import com.thanhnt.userservice.infrastructure.security.SecurityUserDetail;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -95,6 +99,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
   private void authenticateAndGenerateToken(HttpServletResponse response, UserDetails userDetails)
       throws IOException {
+
     UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -102,12 +107,43 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     SecurityUserDetail securityUserDetail = (SecurityUserDetail) authentication.getPrincipal();
 
     TokenResponse token = jwtTokenService.generateToken(securityUserDetail);
-    Cookie cookie = new Cookie("accessToken", token.getAccessToken());
-    cookie.setSecure(false);
-    cookie.setHttpOnly(true);
-    cookie.setPath("/");
-    cookie.setMaxAge(3600);
-    response.addCookie(cookie);
-    response.sendRedirect("http://xmark.online/home?accessToken=" + token.getAccessToken());
+    Users user = accountService.findByEmail(securityUserDetail.getEmail());
+
+    List<RolesEnum> roles =
+        securityUserDetail.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .map(RolesEnum::valueOf)
+            .toList();
+
+    String avatar = user.getAvatar();
+
+    String redirectUrl =
+        String.format(
+            "https://xmark.online/oauth2/redirect"
+                + "?id=%s"
+                + "&email=%s"
+                + "&firstName=%s"
+                + "&lastName=%s"
+                + "&avatar=%s"
+                + "&phone=%s"
+                + "&provider=%s"
+                + "&accessToken=%s"
+                + "&refreshToken=%s"
+                + "&roles=%s"
+                + "&message=%s",
+            URLEncoder.encode(user.getId().toString(), StandardCharsets.UTF_8),
+            URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8),
+            URLEncoder.encode(user.getFirstName(), StandardCharsets.UTF_8),
+            URLEncoder.encode(user.getLastName(), StandardCharsets.UTF_8),
+            URLEncoder.encode(avatar, StandardCharsets.UTF_8),
+            URLEncoder.encode(
+                user.getPhone() != null ? user.getPhone() : "", StandardCharsets.UTF_8),
+            URLEncoder.encode(user.getUserProvider().name(), StandardCharsets.UTF_8),
+            URLEncoder.encode(token.getAccessToken(), StandardCharsets.UTF_8),
+            URLEncoder.encode(token.getRefreshToken(), StandardCharsets.UTF_8),
+            URLEncoder.encode(new ObjectMapper().writeValueAsString(roles), StandardCharsets.UTF_8),
+            URLEncoder.encode("Login success", StandardCharsets.UTF_8));
+
+    response.sendRedirect(redirectUrl);
   }
 }
